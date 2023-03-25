@@ -149,6 +149,8 @@ def ssh(hostname, port):
                 else:
                     continue
                 
+                break
+                
             # Closing connection.
             file_usernames.close()
             file_passwords.close()
